@@ -13,9 +13,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/MariMyr/bonzai-booking-api/issues"
   },
-  "homepage": "https://github.com/MariMyr/bonzai-booking-api#readme"
+  "homepage": "https://github.com/MariMyr/bonzai-booking-api#readme",
+  "dependencies": {
+    "nanoid": "^5.1.5"
+  }
 }
