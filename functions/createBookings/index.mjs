@@ -4,17 +4,74 @@ import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { generateId } from "../../utils/generateId.mjs";
 
 export const handler = async (event) => {
-    const { guests, rooms, checkIn, checkOut, name, email } = JSON.parse(event.body);
+  try {
+    const { guests, rooms, checkIn, checkOut, name, email } = JSON.parse(
+      event.body
+    );
 
-    if(!name || !email) return sendResponse(400, {error: "Name or email missing"});
+    // Basic validations
+    if (!name || !email) {
+      return sendResponse(400, { error: "Name or email missing" });
+    }
+    if (!rooms || rooms.length === 0) {
+      return sendResponse(400, { error: "At least one room must be selected" });
+    }
 
+    // Calculate total capacity
+    const capacity = rooms.reduce((sum, r) => {
+      if (r.type === "single") return sum + r.count * 1;
+      if (r.type === "double") return sum + r.count * 2;
+      if (r.type === "suite") return sum + r.count * 3;
+      return sum;
+    }, 0);
+
+    if (capacity < guests) {
+      return sendResponse(400, {
+        error: "Selected rooms cannot accommodate all guests",
+      });
+    }
+
+    // Calculate total price
+    const totalPrice = rooms.reduce((sum, r) => {
+      if (r.type === "single") return total + r.count * 500;
+      if (r.type === "double") return total + r.count * 1000;
+      if (r.type === "suite") return total + r.count * 1500;
+      return total;
+    }, 0);
+
+    // Create booking object
+    const bookingId = generateId();
+    const newBooking = {
+      id: { S: bookingId },
+      guests: { N: String(guests) },
+      rooms: { S: JSON.stryngify(rooms) }, // we save as JSON string
+      checkIn: { S: checkIn || "" },
+      checkoput: { S: checkOut || "" },
+      name: { S: name },
+      email: { S: email },
+      total: { N: String(price) },
+      createdAt: { S: new Date().toISOString() },
+    };
+
+    // Save to DynamoDB
     const command = new PutItemCommand({
-        TableName: "BonzaiBookings", //insert right name!!!
-        Item: {
-            id: { S: generateId() },
-            
-        }
-    })
+      TableName: "BonzaiBookings",
+      Item: newBooking,
+    });
+    await client.send(command);
 
-    return sendResponse();
-}
+    // Final answer
+    return sendResponse(201, {
+      bookingId,
+      guests,
+      rooms,
+      checkIn,
+      checkOut,
+      name,
+      email,
+      total: price,
+    });
+  } catch (error) {
+    return sendResponse(500, { error: error.message });
+  }
+};
