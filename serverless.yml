@@ -19,26 +19,40 @@ functions:
           path: /bookings
           method: post
   getBooking:
-    handler: handler.getBooking
+    handler: functions/getBooking/index.handler
     events:
       - httpApi:
           path: /bookings/{id}
           method: get
   updateBooking:
-    handler: handler.updateBooking
+    handler: functions/updateBooking/index.handler
     events:
       - httpApi:
           path: /bookings/{id}
           method: put
   cancelBooking:
-    handler: handler.cancelBooking
+    handler: functions/cancelBooking/index.handler
     events:
       - httpApi:
           path: /bookings/{id}
           method: delete
   listBookings:
-    handler: handler.listBookings
+    handler: functions/listBookings/index.handler
     events:
       - httpApi:
           path: /bookings
           method: get
+
+resources:
+  Resources:
+    BookingsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: BonzaiBookings
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: bookingId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: bookingId
+            KeyType: HASH
