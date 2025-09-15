@@ -14,15 +14,19 @@ export const handler = async (event) => {
             TableName: "BonzaiBookings",
             Key: {
                 bookingId: { S: bookingId},
-            }
+            },
+            ReturnValues: "ALL_OLD",
         });
 
-        await client.send(command);
+        const result = await client.send(command);
 
-        return sendResponse(200, { message: `Booking ${bookingId} cancelled successfully` });
+        if (!result.Attributes) {
+            return sendResponse(404, { error: `Booking ${bookingId} not found` });
+        }
+
+        return sendResponse(200, { message: `Booking ${bookingId} was cancelled successfully` });
 
     } catch (error) {
         return sendResponse(500, {error: "Could not cancel booking"})
     }
-
 };

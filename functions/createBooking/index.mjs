@@ -42,7 +42,7 @@ export const handler = async (event) => {
     // Create booking object
     const bookingId = generateId();
     const newBooking = {
-      id: { S: bookingId },
+      bookingId: { S: bookingId },
       guests: { N: String(guests) },
       rooms: { S: JSON.stringify(rooms) }, // we save as JSON string
       checkIn: { S: checkIn || "" },
