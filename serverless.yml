@@ -6,14 +6,39 @@ service: bonzai-booking-api
 provider:
   name: aws
   runtime: nodejs20.x
+  region: eu-north-1
   # Uncomment to easily set up a custom domain. Read the docs for more details:
   # https://www.serverless.com/framework/docs/providers/aws/guide/domains
   # domain: api.example.com
 
 functions:
-  hello:
-    handler: handler.hello
+  createBooking:
+    handler: functions/createBookings/index.handler
     events:
       - httpApi:
-          path: /
+          path: /bookings
+          method: post
+  getBooking:
+    handler: handler.getBooking
+    events:
+      - httpApi:
+          path: /bookings/{id}
+          method: get
+  updateBooking:
+    handler: handler.updateBooking
+    events:
+      - httpApi:
+          path: /bookings/{id}
+          method: put
+  cancelBooking:
+    handler: handler.cancelBooking
+    events:
+      - httpApi:
+          path: /bookings/{id}
+          method: delete
+  listBookings:
+    handler: handler.listBookings
+    events:
+      - httpApi:
+          path: /bookings
           method: get
