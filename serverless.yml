@@ -7,13 +7,15 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: eu-north-1
+  iam:
+    role: arn:aws:iam::605941533091:role/LambdaDynamoDBRol
   # Uncomment to easily set up a custom domain. Read the docs for more details:
   # https://www.serverless.com/framework/docs/providers/aws/guide/domains
   # domain: api.example.com
 
 functions:
   createBooking:
-    handler: functions/createBookings/index.handler
+    handler: functions/createBooking/index.handler
     events:
       - httpApi:
           path: /bookings
