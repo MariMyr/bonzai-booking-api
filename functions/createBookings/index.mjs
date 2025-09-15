@@ -33,10 +33,10 @@ export const handler = async (event) => {
 
     // Calculate total price
     const totalPrice = rooms.reduce((sum, r) => {
-      if (r.type === "single") return total + r.count * 500;
-      if (r.type === "double") return total + r.count * 1000;
-      if (r.type === "suite") return total + r.count * 1500;
-      return total;
+      if (r.type === "single") return sum + r.count * 500;
+      if (r.type === "double") return sum + r.count * 1000;
+      if (r.type === "suite") return sum + r.count * 1500;
+      return sum;
     }, 0);
 
     // Create booking object
@@ -44,12 +44,12 @@ export const handler = async (event) => {
     const newBooking = {
       id: { S: bookingId },
       guests: { N: String(guests) },
-      rooms: { S: JSON.stryngify(rooms) }, // we save as JSON string
+      rooms: { S: JSON.stringify(rooms) }, // we save as JSON string
       checkIn: { S: checkIn || "" },
-      checkoput: { S: checkOut || "" },
+      checkOut: { S: checkOut || "" },
       name: { S: name },
       email: { S: email },
-      total: { N: String(price) },
+      total: { N: String(totalPrice) },
       createdAt: { S: new Date().toISOString() },
     };
 
@@ -69,7 +69,7 @@ export const handler = async (event) => {
       checkOut,
       name,
       email,
-      total: price,
+      total: totalPrice,
     });
   } catch (error) {
     return sendResponse(500, { error: error.message });
