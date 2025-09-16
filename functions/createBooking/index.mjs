@@ -51,6 +51,7 @@ export const handler = async (event) => {
       email: { S: email },
       total: { N: String(totalPrice) },
       createdAt: { S: new Date().toISOString() },
+      entityType: { S: "BOOKING" }
     };
 
     // Save to DynamoDB
