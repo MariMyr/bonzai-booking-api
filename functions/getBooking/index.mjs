@@ -26,14 +26,14 @@ export const handler = async (event) => {
 
     // Parse data from DynamoDB format
     const booking = {
-      bookingId: result.Item.id.S,
+      bookingId: result.Item.bookingId.S,
       guests: parseInt(result.Item.guests.N, 10),
       rooms: JSON.parse(result.Item.rooms.S),
       checkIn: result.Item.checkIn.S,
       checkOut: result.Item.checkOut.S,
       name: result.Item.name.S,
       email: result.Item.email.S,
-      total: parseInt(result.Item.total.N, 10),
+      total: parseInt(result.Item.totalPrice.N, 10),
       createdAt: result.Item.createdAt.S,
     };
 
