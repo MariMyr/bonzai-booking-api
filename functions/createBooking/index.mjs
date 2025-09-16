@@ -40,18 +40,24 @@ export const handler = async (event) => {
       new QueryCommand({
         TableName: "BonzaiBookings",
         IndexName: "entityIndex",
-        KeyConditionExpression: "entityType = :etype AND checkIn >= :from",
+        KeyConditionExpression: "entityType = :etype AND checkIn < :newCheckOut",
         ExpressionAttributeValues: {
         ":etype": { S: "BOOKING" },
-        ":from": { S: "2000-01-01T00:00:00.000Z" }
+        ":newCheckOut": { S: checkOut }
         }
       })
     );
 
+    const newCheckInDate = new Date(checkIn);
+
     let bookedRooms = 0;
     for(const item of existingBookings.Items) {
-      const booked = JSON.parse(item.rooms.S);
-      bookedRooms += booked.reduce((sum, r) => sum + r.count, 0)
+      const existingCheckOut = new Date(item.checkOut.S)
+
+      if(existingCheckOut > newCheckInDate) {
+        const booked = JSON.parse(item.rooms.S);
+        bookedRooms += booked.reduce((sum, r) => sum + r.count, 0)
+      }
     };
 
     if(bookedRooms + requestedRooms > 20){
