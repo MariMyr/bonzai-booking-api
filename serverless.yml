@@ -7,6 +7,8 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: eu-north-1
+  iam:
+    role: 
 
 build:
   esbuild:
@@ -59,7 +61,7 @@ resources:
             AttributeType: S
           - AttributeName: entityType
             AttributeType: S
-          - AttributeName: createdAt
+          - AttributeName: checkIn
             AttributeType: S
         KeySchema:
           - AttributeName: bookingId
@@ -69,7 +71,7 @@ resources:
             KeySchema:
               - AttributeName: entityType
                 KeyType: HASH
-              - AttributeName: createdAt
+              - AttributeName: checkIn
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

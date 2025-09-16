@@ -3,25 +3,40 @@ import { client } from "../../services/db.mjs";
 import { sendResponse } from "../../utils/responses/index.mjs";
 
 export const handler = async (event) => {
+    try{
+        const from = event.queryStringParameters?.from;
+        const to = event.queryStringParameters?.to;
 
-    const command = new QueryCommand({
-        TableName: "BonzaiBookings",
-        IndexName: "entityIndex",
-        KeyConditionExpression: "entityType = :etype AND createdAt >= :start",
-        ExpressionAttributeValues: {
+        let conditionKey = "entityType = :etype AND checkIn >= :from"
+        const expressionValues = {
             ":etype": { S: "BOOKING" },
-            ":start": { S: "2000-01-01T00:00:00.000Z" }
-        },
-        ProjectionExpression: "bookingId, checkIn, checkOut, guests, rooms, #n",
-        ExpressionAttributeNames: {
-            "#n": "name"
+            ":from": { S: from || "2000-01-01T00:00:00.000Z" }
+        };
+
+        if(to) {
+            conditionKey = "entityType = :etype AND checkIn BETWEEN :from AND :to";
+            expressionValues[":to"] = { S: to };
         }
-    });
 
-    const result = await client.send(command);
+        const command = new QueryCommand({
+            TableName: "BonzaiBookings",
+            IndexName: "entityIndex",
+            KeyConditionExpression: conditionKey,
+            ExpressionAttributeValues: expressionValues,
+            ProjectionExpression: "bookingId, checkIn, checkOut, guests, rooms, #n",
+            ExpressionAttributeNames: {
+                "#n": "name"
+            }
+        });
 
-    return sendResponse(200, {
-        success: true,
-        bookings: result.Items
-    });
+        const result = await client.send(command);
+
+        return sendResponse(200, {
+            success: true,
+            bookings: result.Items
+        });
+
+    } catch(error){
+        return sendResponse(500, { error: error.message });
+    };
 };
