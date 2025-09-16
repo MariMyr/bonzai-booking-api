@@ -1,5 +1,5 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: fed24mari
+org: 
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: bonzai-booking-api
 
@@ -7,38 +7,69 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: eu-north-1
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
+
+build:
+  esbuild:
+    minify: true
+
+package:
+  individually: true
 
 functions:
   createBooking:
-    handler: functions/createBookings/index.handler
+    handler: functions/createBooking/index.handler
     events:
       - httpApi:
           path: /bookings
           method: post
   getBooking:
-    handler: handler.getBooking
+    handler: functions/getBooking/index.handler
     events:
       - httpApi:
           path: /bookings/{id}
           method: get
   updateBooking:
-    handler: handler.updateBooking
+    handler: functions/updateBooking/index.handler
     events:
       - httpApi:
           path: /bookings/{id}
           method: put
   cancelBooking:
-    handler: handler.cancelBooking
+    handler: functions/cancelBooking/index.handler
     events:
       - httpApi:
           path: /bookings/{id}
           method: delete
   listBookings:
-    handler: handler.listBookings
+    handler: functions/listBookings/index.handler
     events:
       - httpApi:
           path: /bookings
           method: get
+
+resources:
+  Resources:
+    BookingsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: BonzaiBookings
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: bookingId
+            AttributeType: S
+          - AttributeName: entityType
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: bookingId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: entityIndex
+            KeySchema:
+              - AttributeName: entityType
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL

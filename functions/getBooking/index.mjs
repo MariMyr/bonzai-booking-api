@@ -3,6 +3,7 @@ import { client } from "../../services/db.mjs";
 import { sendResponse } from "../../utils/responses/index.mjs";
 
 export const handler = async (event) => {
+
   try {
     const bookingId = event.pathParameters?.id;
 
@@ -43,3 +44,4 @@ export const handler = async (event) => {
     return sendResponse(500, { error: "Internal server error" });
   }
 };
+
