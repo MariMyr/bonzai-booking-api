@@ -57,6 +57,19 @@ resources:
         AttributeDefinitions:
           - AttributeName: bookingId
             AttributeType: S
+          - AttributeName: entityType
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
         KeySchema:
           - AttributeName: bookingId
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: entityIndex
+            KeySchema:
+              - AttributeName: entityType
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
