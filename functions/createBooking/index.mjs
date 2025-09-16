@@ -1,6 +1,6 @@
 import { sendResponse } from "../../utils/responses/index.mjs";
 import { client } from "../../services/db.mjs";
-import { PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { generateId } from "../../utils/generateId.mjs";
 import { calculateCapacity, calculateTotalPrice } from "../../utils/bookingLogic.mjs";
 
@@ -32,6 +32,31 @@ export const handler = async (event) => {
     if (capacity < guests) {
       return sendResponse(400, { error: "Selected rooms cannot accomodate all guests" });
     }
+
+    //Calculate hotel capacity
+    const requestedRooms = rooms.reduce((sum, r) => sum + r.count, 0);
+
+    const existingBookings = await client.send(
+      new QueryCommand({
+        TableName: "BonzaiBookings",
+        IndexName: "entityIndex",
+        KeyConditionExpression: "entityType = :etype AND checkIn >= :from",
+        ExpressionAttributeValues: {
+        ":etype": { S: "BOOKING" },
+        ":from": { S: "2000-01-01T00:00:00.000Z" }
+        }
+      })
+    );
+
+    let bookedRooms = 0;
+    for(const item of existingBookings.Items) {
+      const booked = JSON.parse(item.rooms.S);
+      bookedRooms += booked.reduce((sum, r) => sum + r.count, 0)
+    };
+
+    if(bookedRooms + requestedRooms > 20){
+      return sendResponse(400, {error: "Hotel is fully booked"})
+    };
 
     // Calculate total price
     const totalPrice = calculateTotalPrice(rooms);
@@ -77,3 +102,4 @@ export const handler = async (event) => {
     return sendResponse(500, { error: error.message });
   }
 };
+
