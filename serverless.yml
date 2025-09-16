@@ -1,5 +1,5 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: fed24mari
+org: distansfe24
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: bonzai-booking-api
 
@@ -8,10 +8,7 @@ provider:
   runtime: nodejs20.x
   region: eu-north-1
   iam:
-    role: arn:aws:iam::605941533091:role/LambdaDynamoDBRol
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
+    role: arn:aws:iam::481310453748:role/cloud-course
 
 build:
   esbuild:
@@ -62,6 +59,19 @@ resources:
         AttributeDefinitions:
           - AttributeName: bookingId
             AttributeType: S
+          - AttributeName: entityType
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
         KeySchema:
           - AttributeName: bookingId
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: entityIndex
+            KeySchema:
+              - AttributeName: entityType
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
