@@ -2,6 +2,7 @@ import { sendResponse } from "../../utils/responses/index.mjs";
 import { client } from "../../services/db.mjs";
 import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { generateId } from "../../utils/generateId.mjs";
+import { calculateCapacity, calculateTotalPrice } from "../../utils/bookingLogic.mjs";
 
 export const handler = async (event) => {
   try {
@@ -10,47 +11,45 @@ export const handler = async (event) => {
     );
 
     // Basic validations
-    if (!name || !email) {
-      return sendResponse(400, { error: "Name or email missing" });
+    if (!guests || guests < 1) {
+      return sendResponse(400, { error: "Number of guests must be at least 1" });
     }
     if (!rooms || rooms.length === 0) {
       return sendResponse(400, { error: "At least one room must be selected" });
     }
+    if (!checkIn || !checkOut) {
+      return sendResponse(400, { error: "Check-in and check-out dates are required" });
+    }
+    if (new Date(checkOut) <= new Date(checkIn)) {
+      return sendResponse(400, { error: "Check-out date must be after check-in date" });
+    }
+    if (!name || !email) {
+      return sendResponse(400, { error: "Name and email are required" });
+    }
 
     // Calculate total capacity
-    const capacity = rooms.reduce((sum, r) => {
-      if (r.type === "single") return sum + r.count * 1;
-      if (r.type === "double") return sum + r.count * 2;
-      if (r.type === "suite") return sum + r.count * 3;
-      return sum;
-    }, 0);
-
+    const capacity = calculateCapacity(rooms);
     if (capacity < guests) {
-      return sendResponse(400, {
-        error: "Selected rooms cannot accommodate all guests",
-      });
+      return sendResponse(400, { error: "Selected rooms cannot accomodate all guests" });
     }
 
     // Calculate total price
-    const totalPrice = rooms.reduce((sum, r) => {
-      if (r.type === "single") return sum + r.count * 500;
-      if (r.type === "double") return sum + r.count * 1000;
-      if (r.type === "suite") return sum + r.count * 1500;
-      return sum;
-    }, 0);
+    const totalPrice = calculateTotalPrice(rooms);
 
     // Create booking object
     const bookingId = generateId();
+    const createdAt = new Date().toISOString();
+
     const newBooking = {
       bookingId: { S: bookingId },
       guests: { N: String(guests) },
       rooms: { S: JSON.stringify(rooms) }, // we save as JSON string
-      checkIn: { S: checkIn || "" },
-      checkOut: { S: checkOut || "" },
+      checkIn: { S: checkIn },
+      checkOut: { S: checkOut },
       name: { S: name },
       email: { S: email },
-      total: { N: String(totalPrice) },
-      createdAt: { S: new Date().toISOString() },
+      totalPrice: { N: totalPrice.toString() },
+      createdAt: { S: createdAt },
       entityType: { S: "BOOKING" }
     };
 
@@ -59,6 +58,7 @@ export const handler = async (event) => {
       TableName: "BonzaiBookings",
       Item: newBooking,
     });
+    
     await client.send(command);
 
     // Final answer
@@ -70,7 +70,8 @@ export const handler = async (event) => {
       checkOut,
       name,
       email,
-      total: totalPrice,
+      totalPrice,
+      createdAt,
     });
   } catch (error) {
     return sendResponse(500, { error: error.message });
