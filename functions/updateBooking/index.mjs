@@ -1,7 +1,7 @@
 import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { client } from "../../services/db.mjs";
 import { sendResponse } from "../../utils/responses/index.mjs";
-import { calculateCapacity, calculateTotalPrice, calculateHotelCapacity } from "../../utils/bookingLogic.mjs";
+import { calculateCapacity, calculateTotalPrice, calculateHotelCapacity, isValidDate } from "../../utils/bookingLogic.mjs";
 
 export const handler = async (event) => {
   try {
@@ -15,6 +15,10 @@ export const handler = async (event) => {
       return sendResponse(400, {
         error: "Number of guests, rooms, check-in or check-out date missing",
       });
+    }
+
+    if(!isValidDate(checkIn) || !isValidDate(checkOut)) {
+      return sendResponse(400, { error: "Both checkin and checkout date needs to be in yyyy-mm-dd format" })
     }
 
     const filteredRooms = rooms.filter(r => r.count > 0);
