@@ -1,8 +1,8 @@
 import { sendResponse } from "../../utils/responses/index.mjs";
 import { client } from "../../services/db.mjs";
-import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { generateId } from "../../utils/generateId.mjs";
-import { calculateCapacity, calculateTotalPrice } from "../../utils/bookingLogic.mjs";
+import { calculateCapacity, calculateHotelCapacity, calculateTotalPrice } from "../../utils/bookingLogic.mjs";
 
 export const handler = async (event) => {
   try {
@@ -34,35 +34,9 @@ export const handler = async (event) => {
     }
 
     //Calculate hotel capacity
-    const requestedRooms = rooms.reduce((sum, r) => sum + r.count, 0);
-
-    const existingBookings = await client.send(
-      new QueryCommand({
-        TableName: "BonzaiBookings",
-        IndexName: "entityIndex",
-        KeyConditionExpression: "entityType = :etype AND checkIn < :newCheckOut",
-        ExpressionAttributeValues: {
-        ":etype": { S: "BOOKING" },
-        ":newCheckOut": { S: checkOut }
-        }
-      })
-    );
-
-    const newCheckInDate = new Date(checkIn);
-
-    let bookedRooms = 0;
-    for(const item of existingBookings.Items) {
-      const existingCheckOut = new Date(item.checkOut.S)
-
-      if(existingCheckOut > newCheckInDate) {
-        const booked = JSON.parse(item.rooms.S);
-        bookedRooms += booked.reduce((sum, r) => sum + r.count, 0)
-      }
-    };
-
-    if(bookedRooms + requestedRooms > 20){
-      return sendResponse(400, {error: "Hotel is fully booked"})
-    };
+    const isFull = await calculateHotelCapacity(rooms, checkIn, checkOut);
+    
+    if(isFull) return sendResponse(400, { error: "Hotel is fully booked" });
 
     // Calculate total price
     const totalPrice = calculateTotalPrice(rooms);
