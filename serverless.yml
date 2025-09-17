@@ -1,5 +1,5 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: 
+org: distansfe24
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: bonzai-booking-api
 
@@ -8,7 +8,7 @@ provider:
   runtime: nodejs20.x
   region: eu-north-1
   iam:
-    role: 
+    role: arn:aws:iam::481310453748:role/cloud-course
 
 build:
   esbuild:

@@ -2,7 +2,7 @@ import { sendResponse } from "../../utils/responses/index.mjs";
 import { client } from "../../services/db.mjs";
 import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { generateId } from "../../utils/generateId.mjs";
-import { calculateCapacity, calculateHotelCapacity, calculateTotalPrice } from "../../utils/bookingLogic.mjs";
+import { calculateCapacity, calculateHotelCapacity, calculateTotalPrice, isValidDate } from "../../utils/bookingLogic.mjs";
 
 export const handler = async (event) => {
   try {
@@ -19,6 +19,9 @@ export const handler = async (event) => {
     }
     if (!checkIn || !checkOut) {
       return sendResponse(400, { error: "Check-in and check-out dates are required" });
+    }
+    if(!isValidDate(checkIn) || !isValidDate(checkOut)) {
+      return sendResponse(400, { error: "Both checkin and checkout date needs to be in yyyy-mm-dd format" })
     }
     if (new Date(checkOut) <= new Date(checkIn)) {
       return sendResponse(400, { error: "Check-out date must be after check-in date" });
