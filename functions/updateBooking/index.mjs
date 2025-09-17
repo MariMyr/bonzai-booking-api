@@ -1,7 +1,7 @@
 import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { client } from "../../services/db.mjs";
 import { sendResponse } from "../../utils/responses/index.mjs";
-import { calculateCapacity, calculateTotalPrice } from "../../utils/bookingLogic.mjs";
+import { calculateCapacity, calculateTotalPrice, calculateHotelCapacity } from "../../utils/bookingLogic.mjs";
 
 export const handler = async (event) => {
   try {
@@ -22,7 +22,10 @@ export const handler = async (event) => {
       return sendResponse(400, {
         error: "Selected rooms cannot accommodate all guests",
       });
-    }
+    };
+
+    const isFull = await calculateHotelCapacity(rooms, checkIn, checkOut);
+    if(isFull) return sendResponse(400, { error: "Hotel is fully booked" });
 
     const totalPrice = calculateTotalPrice(rooms);
     const modifiedAt = new Date().toISOString();
