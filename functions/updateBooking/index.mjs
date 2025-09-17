@@ -17,17 +17,19 @@ export const handler = async (event) => {
       });
     }
 
-    const capacity = calculateCapacity(rooms);
+    const filteredRooms = rooms.filter(r => r.count > 0);
+
+    const capacity = calculateCapacity(filteredRooms);
     if (capacity < guests) {
       return sendResponse(400, {
         error: "Selected rooms cannot accommodate all guests",
       });
     };
 
-    const isFull = await calculateHotelCapacity(rooms, checkIn, checkOut);
+    const isFull = await calculateHotelCapacity(filteredRooms, checkIn, checkOut);
     if(isFull) return sendResponse(400, { error: "Hotel is fully booked" });
 
-    const totalPrice = calculateTotalPrice(rooms);
+    const totalPrice = calculateTotalPrice(filteredRooms);
     const modifiedAt = new Date().toISOString();
 
     const command = new UpdateItemCommand({
@@ -40,7 +42,7 @@ export const handler = async (event) => {
       ConditionExpression: "attribute_exists(bookingId)",
       ExpressionAttributeValues: {
         ":guests": { N: guests.toString() },
-        ":rooms": { S: JSON.stringify(rooms) },
+        ":rooms": { S: JSON.stringify(filteredRooms) },
         ":checkIn": { S: checkIn },
         ":checkOut": { S: checkOut },
         ":totalPrice": { N: totalPrice.toString() },
@@ -53,7 +55,7 @@ export const handler = async (event) => {
     return sendResponse(200, {
       bookingId,
       guests,
-      rooms,
+      rooms: filteredRooms,
       checkIn,
       checkOut,
       totalPrice,
