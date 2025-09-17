@@ -27,19 +27,21 @@ export const handler = async (event) => {
       return sendResponse(400, { error: "Name and email are required" });
     }
 
+    const filteredRooms = rooms.filter(r => r.count > 0);
+
     // Calculate total capacity
-    const capacity = calculateCapacity(rooms);
+    const capacity = calculateCapacity(filteredRooms);
     if (capacity < guests) {
       return sendResponse(400, { error: "Selected rooms cannot accomodate all guests" });
     }
 
     //Calculate hotel capacity
-    const isFull = await calculateHotelCapacity(rooms, checkIn, checkOut);
+    const isFull = await calculateHotelCapacity(filteredRooms, checkIn, checkOut);
     
     if(isFull) return sendResponse(400, { error: "Hotel is fully booked" });
 
     // Calculate total price
-    const totalPrice = calculateTotalPrice(rooms);
+    const totalPrice = calculateTotalPrice(filteredRooms);
 
     // Create booking object
     const bookingId = generateId();
@@ -48,7 +50,7 @@ export const handler = async (event) => {
     const newBooking = {
       bookingId: { S: bookingId },
       guests: { N: String(guests) },
-      rooms: { S: JSON.stringify(rooms) }, // we save as JSON string
+      rooms: { S: JSON.stringify(filteredRooms) }, // we save as JSON string
       checkIn: { S: checkIn },
       checkOut: { S: checkOut },
       name: { S: name },
@@ -70,7 +72,7 @@ export const handler = async (event) => {
     return sendResponse(201, {
       bookingId,
       guests,
-      rooms,
+      rooms: filteredRooms,
       checkIn,
       checkOut,
       name,
